@@ -4,6 +4,11 @@ import glob
 import os
 
 
+def getBasename(fn):
+    """Function to return the name of the filename without an extension"""
+    return os.path.splitext(os.path.basename(fn))[0]
+
+
 def get_filenames(file_string, verbose=False):
     """Function for retrieve a list of files given a string."""
     files = []
