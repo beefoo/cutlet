@@ -28,6 +28,9 @@ def parse_args():
         help="Path to checkpoint file",
     )
     parser.add_argument(
+        "-segments", dest="MAX_SEGMENTS", default=5, help="Max segments per image"
+    )
+    parser.add_argument(
         "-out",
         dest="OUTPUT_DIR",
         default="output/sample-segments/",
@@ -67,6 +70,10 @@ def main(a):
         image = cv2.imread(fn)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         masks = mask_generator.generate(image)
+        masks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
+        sampleSize = a.MAX_SEGMENTS
+        if len(masks) > sampleSize:
+            masks = masks[:sampleSize]
         if len(masks) == 0:
             continue
         image = cv2.cvtColor(image, cv2.COLOR_RGB2RGBA)  # add transparency
