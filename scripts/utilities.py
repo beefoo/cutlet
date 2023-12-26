@@ -4,7 +4,14 @@ import glob
 import os
 
 
-def getBasename(fn):
+def empty_directory(dirname):
+    """Function for emptying a directory"""
+    dirname = dirname.strip("/")
+    files = f"{dirname}/*"
+    remove_files(files)
+
+
+def get_basename(fn):
     """Function to return the name of the filename without an extension"""
     return os.path.splitext(os.path.basename(fn))[0]
 
@@ -33,3 +40,21 @@ def make_directories(filenames):
         dirname = os.path.dirname(filename)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
+
+
+def remove_files(listOrString):
+    """Function for removing a list of files given a string or list."""
+    filenames = listOrString
+    if not isinstance(listOrString, list) and "*" in listOrString:
+        filenames = glob.glob(listOrString)
+    elif not isinstance(listOrString, list):
+        filenames = [listOrString]
+    print(f"Removing {len(filenames)} files")
+    for fn in filenames:
+        if os.path.isfile(fn):
+            os.remove(fn)
+
+
+def round_int(value):
+    """Round a value and convert to integer"""
+    return int(round(value))
