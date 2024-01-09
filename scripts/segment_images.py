@@ -91,7 +91,7 @@ def main(a):
         im_h, im_w, im_c = image.shape
         im_d = max(im_h, im_w)
         if im_d > a.MAX_IMAGE_DIMENSION:
-            scale = 1.0 * a.MAX_IMAGE_DIMENSION / imD
+            scale = 1.0 * a.MAX_IMAGE_DIMENSION / im_d
             im_h = round_int(im_h * scale)
             im_w = round_int(im_w * scale)
             image = cv2.resize(image, (im_w, im_h))

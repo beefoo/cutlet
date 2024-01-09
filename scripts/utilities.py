@@ -2,6 +2,21 @@
 
 import glob
 import os
+import requests
+
+
+def download(url, filename, overwrite=False):
+    """Function for downloading an arbitrary file as binary file."""
+    if os.path.isfile(filename) and not overwrite:
+        print(f"{filename} already exists.")
+        return
+    print(f"Downloading file from {url}...")
+    r = requests.get(url, stream=True, timeout=30)
+    with open(filename, "wb") as f:
+        for chunk in r.iter_content(chunk_size=1024):
+            if chunk:  # filter out keep-alive new chunks
+                f.write(chunk)
+    print(f"Downloaded {filename}.")
 
 
 def empty_directory(dirname):
