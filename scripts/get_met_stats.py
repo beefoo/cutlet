@@ -31,9 +31,9 @@ def parse_args():
         help="Cache directory",
     )
     parser.add_argument(
-        "-dout",
-        dest="OUTPUT_DATA_FILE",
-        default="output/met-open-access-objects.csv",
+        "-out",
+        dest="OUTPUT_DIR",
+        default="output/",
         help="Output data file",
     )
     parser.add_argument(
@@ -42,18 +42,12 @@ def parse_args():
         action="store_true",
         help="Clear the cache before processing?",
     )
-    parser.add_argument(
-        "-debug",
-        dest="DEBUG",
-        action="store_true",
-        help="Output debug info",
-    )
     args = parser.parse_args()
     return args
 
 
 def main(a):
-    """Main function retrieve open access Met images"""
+    """Main function retrieve open access Met image stats"""
 
     make_directories(a.CACHE_DIRECTORY)
 
@@ -81,6 +75,14 @@ def main(a):
         pd_items.query(a.QUERY_STRING, inplace=True)
         total_pd_items = pd_items.shape[0]
         print(f"{total_pd_items:,} items after filtering with query string.")
+
+    object_types = pd_items["Object Name"].value_counts()
+    object_types.to_csv(f"{a.OUTPUT_DIR}met_object_types.csv")
+
+    mediums = pd_items["Medium"].value_counts()
+    mediums.to_csv(f"{a.OUTPUT_DIR}met_mediums.csv")
+
+    print("Done.")
 
 
 main(parse_args())
