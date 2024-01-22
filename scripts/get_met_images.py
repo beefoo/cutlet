@@ -4,6 +4,7 @@
 
 import argparse
 import pandas as pd
+import time
 
 from utilities import *
 
@@ -21,7 +22,7 @@ def parse_args():
     parser.add_argument(
         "-query",
         dest="QUERY_STRING",
-        default="",
+        default='`Object Name` == "Sculpture"',
         help="A Pandas query string to filter by. https://pandas.pydata.org/docs/user_guide/indexing.html#indexing-query",
     )
     parser.add_argument(
@@ -78,9 +79,38 @@ def main(a):
 
     # Filter data by query
     if a.QUERY_STRING != "":
-        pd_items.query(a.QUERY_STRING, inplace=True)
+        pd_items = pd_items.query(a.QUERY_STRING)
         total_pd_items = pd_items.shape[0]
-        print(f"{total_pd_items:,} items after filtering with query string.")
+        print(f"{total_pd_items:,} items after filtering with query: {a.QUERY_STRING}")
+
+    # Iterate through items
+    item_cache = load_cache_file(f"{a.CACHE_DIRECTORY}item_cache.p", {})
+    for i, item in pd_items.iterrows():
+        object_id = str(item["Object ID"])
+
+        # Check to see if item data is cached
+        item_data = item_cache[object_id] if object_id in item_cache else None
+        if item_data is None:
+            # Request data from API
+            api_url = f"https://collectionapi.metmuseum.org/public/collection/v1/objects/{object_id}"
+            fields_to_cache = ["primaryImage"]
+            response = json_request(api_url)
+            if "error" in response:
+                print(f"{response['error']} error when requesting {api_url}")
+                continue
+
+            # Load data from response
+            item_data = {}
+            for field in fields_to_cache:
+                if field in response:
+                    item_data[field] = response[field]
+
+            # Save response to cache
+            item_cache[object_id] = item_data
+            save_cache_file(f"{a.CACHE_DIRECTORY}item_cache.p", item_cache)
+
+            # Wait a second before doing another request
+            time.sleep(1)
 
 
 main(parse_args())

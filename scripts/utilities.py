@@ -2,6 +2,7 @@
 
 import glob
 import os
+import pickle
 import requests
 
 
@@ -47,6 +48,28 @@ def get_filenames(file_string, verbose=False):
     return files
 
 
+def json_request(url):
+    data = {}
+    try:
+        response = requests.get(url)
+        data = response.json()
+    except requests.HTTPError:
+        data = {"error": "HTTPError"}
+    except requests.Timeout:
+        data = {"error": "Timeout"}
+    except requests.JSONDecodeError:
+        data = {"error": "JSONDecodeError"}
+    return data
+
+
+def load_cache_file(filename, defaultValue={}):
+    """Load a pickle file"""
+    if os.path.isfile(filename):
+        return pickle.load(open(filename, "rb"))
+    else:
+        return defaultValue
+
+
 def make_directories(filenames):
     """Function for creating directories if they do not exist."""
     if not isinstance(filenames, list):
@@ -73,3 +96,8 @@ def remove_files(listOrString):
 def round_int(value):
     """Round a value and convert to integer"""
     return int(round(value))
+
+
+def save_cache_file(filename, data):
+    """Save a pickle file"""
+    pickle.dump(data, open(filename, "wb"))
