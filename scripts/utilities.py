@@ -2,22 +2,45 @@
 
 import glob
 import os
+from PIL import Image
 import pickle
 import requests
 
 
-def download(url, filename, overwrite=False):
+def download(url, filename, overwrite=False, verbose=True):
     """Function for downloading an arbitrary file as binary file."""
     if os.path.isfile(filename) and not overwrite:
-        print(f"{filename} already exists.")
+        if verbose:
+            print(f"{filename} already exists.")
         return
-    print(f"Downloading file from {url}...")
-    r = requests.get(url, stream=True, timeout=30)
-    with open(filename, "wb") as f:
-        for chunk in r.iter_content(chunk_size=1024):
-            if chunk:  # filter out keep-alive new chunks
-                f.write(chunk)
-    print(f"Downloaded {filename}.")
+    if verbose:
+        print(f"Downloading file from {url}...")
+    try:
+        r = requests.get(url, stream=True, timeout=30)
+        with open(filename, "wb") as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:  # filter out keep-alive new chunks
+                    f.write(chunk)
+        if verbose:
+            print(f"Downloaded {url}")
+    except requests.HTTPError:
+        print(f"HTTP error when trying to get {url}")
+    except requests.Timeout:
+        print(f"Timeout when trying to get {url}")
+
+
+def download_and_read_image(url):
+    """Download and read an image without saving to file"""
+    im = None
+    try:
+        im = Image.open(requests.get(url, stream=True, timeout=60).raw)
+    except requests.HTTPError:
+        print(f"HTTP error when trying to get image {url}")
+        im = False
+    except requests.Timeout:
+        print(f"Timeout when trying to get image {url}")
+        im = False
+    return im
 
 
 def empty_directory(dirname):
@@ -49,9 +72,10 @@ def get_filenames(file_string, verbose=False):
 
 
 def json_request(url):
+    """Make a JSON request"""
     data = {}
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=30)
         data = response.json()
     except requests.HTTPError:
         data = {"error": "HTTPError"}
@@ -101,3 +125,8 @@ def round_int(value):
 def save_cache_file(filename, data):
     """Save a pickle file"""
     pickle.dump(data, open(filename, "wb"))
+
+
+def string_to_ascii(string):
+    """Conver a string to ascii"""
+    return string.encode("ascii", "ignore")

@@ -4,6 +4,7 @@
 
 import argparse
 import pandas as pd
+import piexif
 import time
 
 from utilities import *
@@ -32,9 +33,9 @@ def parse_args():
         help="Cache directory",
     )
     parser.add_argument(
-        "-dout",
-        dest="OUTPUT_DATA_FILE",
-        default="output/met-open-access-objects.csv",
+        "-out",
+        dest="OUTPUT_DIR",
+        default="output/met-sculptures/",
         help="Output data file",
     )
     parser.add_argument(
@@ -56,7 +57,7 @@ def parse_args():
 def main(a):
     """Main function retrieve open access Met images"""
 
-    make_directories(a.CACHE_DIRECTORY)
+    make_directories([a.CACHE_DIRECTORY, a.OUTPUT_DIR])
 
     if a.CLEAN:
         empty_directory(a.CACHE_DIRECTORY)
@@ -83,17 +84,30 @@ def main(a):
         total_pd_items = pd_items.shape[0]
         print(f"{total_pd_items:,} items after filtering with query: {a.QUERY_STRING}")
 
+    # Reset the index
+    pd_items = pd_items.reset_index()
+
     # Iterate through items
     item_cache = load_cache_file(f"{a.CACHE_DIRECTORY}item_cache.p", {})
     for i, item in pd_items.iterrows():
         object_id = str(item["Object ID"])
+        image_filename = f"{a.OUTPUT_DIR}{object_id}.jpg"
+
+        if os.path.isfile(image_filename):
+            continue
 
         # Check to see if item data is cached
         item_data = item_cache[object_id] if object_id in item_cache else None
         if item_data is None:
             # Request data from API
             api_url = f"https://collectionapi.metmuseum.org/public/collection/v1/objects/{object_id}"
-            fields_to_cache = ["primaryImage"]
+            fields_to_cache = [
+                "title",
+                "artistDisplayName",
+                "objectDate",
+                "objectURL",
+                "primaryImage",
+            ]
             response = json_request(api_url)
             if "error" in response:
                 print(f"{response['error']} error when requesting {api_url}")
@@ -103,14 +117,45 @@ def main(a):
             item_data = {}
             for field in fields_to_cache:
                 if field in response:
-                    item_data[field] = response[field]
+                    value = str(response[field]).strip()
+                    if value != "":
+                        item_data[field] = value
 
             # Save response to cache
             item_cache[object_id] = item_data
             save_cache_file(f"{a.CACHE_DIRECTORY}item_cache.p", item_cache)
 
-            # Wait a second before doing another request
-            time.sleep(1)
+        # Download and save the image
+        if "primaryImage" in item_data:
+            download(item_data["primaryImage"], image_filename, verbose=False)
+            if not os.path.isfile(image_filename):
+                time.sleep(1)
+                continue
+
+            # Write metadata to the image file
+            exif_dict = piexif.load(image_filename)
+            if "title" in item_data:
+                exif_dict["0th"][piexif.ImageIFD.ImageDescription] = string_to_ascii(
+                    item_data["title"]
+                )
+            if "artistDisplayName" in item_data:
+                exif_dict["0th"][piexif.ImageIFD.Artist] = string_to_ascii(
+                    item_data["artistDisplayName"]
+                )
+            if "objectDate" in item_data:
+                exif_dict["0th"][piexif.ImageIFD.DateTime] = string_to_ascii(
+                    item_data["objectDate"]
+                )
+            if "objectURL" in item_data:
+                exif_dict["0th"][piexif.ImageIFD.ImageID] = string_to_ascii(
+                    item_data["objectURL"]
+                )
+            exif_bytes = piexif.dump(exif_dict)
+            piexif.insert(exif_bytes, image_filename)
+            print(
+                f"{i+1} of {total_pd_items} ({round(100.0*i/total_pd_items,2)}%) Saved {image_filename}"
+            )
+        break
 
 
 main(parse_args())
