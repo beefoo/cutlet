@@ -105,6 +105,16 @@ def make_directories(filenames):
             os.makedirs(dirname)
 
 
+def read_image_meta(image_filename, meta):
+    """Read exif metadata from image file"""
+    exif_dict = piexif.load(image_filename)
+    values = {}
+    for field_from, field_to in meta:
+        value = exif_dict["0th"][getattr(piexif.ImageIFD, field_from)].decode()
+        values[field_to] = value
+    return values
+
+
 def remove_files(listOrString):
     """Function for removing a list of files given a string or list."""
     filenames = listOrString
