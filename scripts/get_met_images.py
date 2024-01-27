@@ -4,7 +4,6 @@
 
 import argparse
 import pandas as pd
-import piexif
 import time
 
 from utilities import *
@@ -117,9 +116,9 @@ def main(a):
             item_data = {}
             for field in fields_to_cache:
                 if field in response:
-                    value = str(response[field]).strip()
-                    if value != "":
-                        item_data[field] = value
+                    item_data[field] = str(response[field]).strip()
+                else:
+                    item_data[field] = ""
 
             # Save response to cache
             item_cache[object_id] = item_data
@@ -133,29 +132,18 @@ def main(a):
                 continue
 
             # Write metadata to the image file
-            exif_dict = piexif.load(image_filename)
-            if "title" in item_data:
-                exif_dict["0th"][piexif.ImageIFD.ImageDescription] = string_to_ascii(
-                    item_data["title"]
-                )
-            if "artistDisplayName" in item_data:
-                exif_dict["0th"][piexif.ImageIFD.Artist] = string_to_ascii(
-                    item_data["artistDisplayName"]
-                )
-            if "objectDate" in item_data:
-                exif_dict["0th"][piexif.ImageIFD.DateTime] = string_to_ascii(
-                    item_data["objectDate"]
-                )
-            if "objectURL" in item_data:
-                exif_dict["0th"][piexif.ImageIFD.ImageID] = string_to_ascii(
-                    item_data["objectURL"]
-                )
-            exif_bytes = piexif.dump(exif_dict)
-            piexif.insert(exif_bytes, image_filename)
+            write_meta_to_image(
+                image_filename,
+                [
+                    ("ImageDescription", item_data["title"]),
+                    ("Artist", item_data["artistDisplayName"]),
+                    ("DateTime", item_data["objectDate"]),
+                    ("ImageID", item_data["objectURL"]),
+                ],
+            )
             print(
                 f"{i+1} of {total_pd_items} ({round(100.0*i/total_pd_items,2)}%) Saved {image_filename}"
             )
-        break
 
 
 main(parse_args())

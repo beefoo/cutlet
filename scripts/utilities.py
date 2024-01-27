@@ -4,6 +4,7 @@ import glob
 import os
 from PIL import Image
 import pickle
+import piexif
 import requests
 
 
@@ -128,5 +129,15 @@ def save_cache_file(filename, data):
 
 
 def string_to_ascii(string):
-    """Conver a string to ascii"""
+    """Convert a string to ascii"""
     return string.encode("ascii", "ignore")
+
+
+def write_meta_to_image(image_filename, meta):
+    """Write exif metadata to image file"""
+    exif_dict = piexif.load(image_filename)
+    for field, value in meta:
+        if value and value != "":
+            exif_dict["0th"][getattr(piexif.ImageIFD, field)] = string_to_ascii(value)
+    exif_bytes = piexif.dump(exif_dict)
+    piexif.insert(exif_bytes, image_filename)
