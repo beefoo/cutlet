@@ -140,35 +140,15 @@ def main(a):
                 continue
 
             # Write metadata to the image file
-            attempts = 0
-            max_attempts = 3
-            success = False
-            while True:
-                try:
-                    write_meta_to_image(
-                        image_filename,
-                        [
-                            ("ImageDescription", item_data["title"]),
-                            ("Artist", item_data["artistDisplayName"]),
-                            ("DateTime", item_data["objectDate"]),
-                            ("ImageID", item_data["objectURL"]),
-                        ],
-                    )
-                    success = True
-                    break
-
-                except (
-                    struct.error,
-                    piexif._exceptions.InvalidImageDataError,
-                ) as error:
-                    attempts += 1
-                    if attempts < max_attempts:
-                        print(
-                            f" Error ({error}) trying to write meta to {image_filename}. Trying again."
-                        )
-                        time.sleep(3)
-                    else:
-                        break
+            success = write_meta_to_image_handler(
+                image_filename,
+                [
+                    ("ImageDescription", item_data["title"]),
+                    ("Artist", item_data["artistDisplayName"]),
+                    ("DateTime", item_data["objectDate"]),
+                    ("ImageID", item_data["objectURL"]),
+                ],
+            )
 
             if not success:
                 print(f"Could not write meta to {image_filename}. Removing.")
