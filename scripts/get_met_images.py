@@ -3,8 +3,12 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import pandas as pd
+import os
+import struct
 import time
+
+import pandas as pd
+import piexif
 
 from utilities import *
 
@@ -88,6 +92,7 @@ def main(a):
 
     # Iterate through items
     item_cache = load_cache_file(f"{a.CACHE_DIRECTORY}item_cache.p", {})
+    errors = 0
     for i, item in pd_items.iterrows():
         object_id = str(item["Object ID"])
         image_filename = f"{a.OUTPUT_DIR}{object_id}.jpg"
@@ -109,7 +114,9 @@ def main(a):
             ]
             response = json_request(api_url)
             if "error" in response:
-                print(f"{response['error']} error when requesting {api_url}")
+                print(f"{response['error']} error when requesting {api_url}. Skipping.")
+                errors += 1
+                time.sleep(1)
                 continue
 
             # Load data from response
@@ -128,22 +135,55 @@ def main(a):
         if "primaryImage" in item_data:
             download(item_data["primaryImage"], image_filename, verbose=False)
             if not os.path.isfile(image_filename):
+                errors += 1
                 time.sleep(1)
                 continue
 
             # Write metadata to the image file
-            write_meta_to_image(
-                image_filename,
-                [
-                    ("ImageDescription", item_data["title"]),
-                    ("Artist", item_data["artistDisplayName"]),
-                    ("DateTime", item_data["objectDate"]),
-                    ("ImageID", item_data["objectURL"]),
-                ],
-            )
+            attempts = 0
+            max_attempts = 3
+            success = False
+            while True:
+                try:
+                    write_meta_to_image(
+                        image_filename,
+                        [
+                            ("ImageDescription", item_data["title"]),
+                            ("Artist", item_data["artistDisplayName"]),
+                            ("DateTime", item_data["objectDate"]),
+                            ("ImageID", item_data["objectURL"]),
+                        ],
+                    )
+                    success = True
+                    break
+
+                except (
+                    struct.error,
+                    piexif._exceptions.InvalidImageDataError,
+                ) as error:
+                    attempts += 1
+                    if attempts < max_attempts:
+                        print(
+                            f" Error ({error}) trying to write meta to {image_filename}. Trying again."
+                        )
+                        time.sleep(3)
+                    else:
+                        break
+
+            if not success:
+                print(f"Could not write meta to {image_filename}. Removing.")
+                os.remove(image_filename)
+                errors += 1
+                continue
+
             print(
                 f"{i+1} of {total_pd_items} ({round(100.0*i/total_pd_items,2)}%) Saved {image_filename}"
             )
+
+    if errors > 0:
+        print(f"Completed with {errors} errors. Re-run to retry failed image downloads")
+    else:
+        print("Finished with no errors")
 
 
 main(parse_args())

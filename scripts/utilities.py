@@ -24,6 +24,8 @@ def download(url, filename, overwrite=False, verbose=True):
                     f.write(chunk)
         if verbose:
             print(f"Downloaded {url}")
+    except requests.exceptions.MissingSchema:
+        print(f"Schema error when trying to get image {url}")
     except requests.HTTPError:
         print(f"HTTP error when trying to get {url}")
     except requests.Timeout:
@@ -32,15 +34,15 @@ def download(url, filename, overwrite=False, verbose=True):
 
 def download_and_read_image(url):
     """Download and read an image without saving to file"""
-    im = None
+    im = False
     try:
         im = Image.open(requests.get(url, stream=True, timeout=60).raw)
     except requests.HTTPError:
         print(f"HTTP error when trying to get image {url}")
-        im = False
+    except requests.exceptions.MissingSchema:
+        print(f"Schema error when trying to get image {url}")
     except requests.Timeout:
         print(f"Timeout when trying to get image {url}")
-        im = False
     return im
 
 
