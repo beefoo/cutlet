@@ -140,7 +140,7 @@ def main(a):
                 continue
 
             # Write metadata to the image file
-            success = write_meta_to_image_handler(
+            success = write_meta_to_image(
                 image_filename,
                 [
                     ("ImageDescription", item_data["title"]),

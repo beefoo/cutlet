@@ -150,34 +150,22 @@ def string_to_ascii(string):
 
 def write_meta_to_image(image_filename, meta):
     """Write exif metadata to image file"""
-    exif_dict = piexif.load(image_filename)
-    for field, value in meta:
-        if value and value != "":
-            exif_dict["0th"][getattr(piexif.ImageIFD, field)] = string_to_ascii(value)
-    exif_bytes = piexif.dump(exif_dict)
-    piexif.insert(exif_bytes, image_filename)
-
-
-def write_meta_to_image_handler(image_filename, meta, max_attempts=3, wait_amount=3):
-    """Like write_meta_to_image but with error handling"""
-    attempts = 0
-    success = False
-    while True:
-        try:
-            write_meta_to_image(image_filename, meta)
-            success = True
-            break
-
-        except (
-            struct.error,
-            piexif._exceptions.InvalidImageDataError,
-        ) as error:
-            attempts += 1
-            if attempts < max_attempts:
-                print(
-                    f" Error ({error}) trying to write meta to {image_filename}. Trying again."
+    try:
+        exif_dict = piexif.load(image_filename)
+        for field, value in meta:
+            if value and value != "":
+                exif_dict["0th"][getattr(piexif.ImageIFD, field)] = string_to_ascii(
+                    value
                 )
-                time.sleep(wait_amount)
-            else:
-                break
-    return success
+        exif_bytes = piexif.dump(exif_dict)
+        piexif.insert(exif_bytes, image_filename)
+        return True
+
+    except (
+        struct.error,
+        piexif._exceptions.InvalidImageDataError,
+    ) as error:
+        print(
+            f" Error ({error}) trying to write meta to {image_filename}. Trying again."
+        )
+        return False
