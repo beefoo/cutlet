@@ -44,6 +44,13 @@ def parse_args():
         help="Max dimension of a source image; image will be resized before processing",
     )
     parser.add_argument(
+        "-edge",
+        dest="EDGE",
+        type=float,
+        default=0.05,
+        help="Percentage of width/height; disregard if object is on the edge",
+    )
+    parser.add_argument(
         "-clean",
         dest="CLEAN",
         action="store_true",
@@ -105,7 +112,7 @@ def main(a):
         # remove masks that are on the edge
         non_edge_masks = []
         for mask in masks:
-            edge = max(10, im_h * 0.05, im_w * 0.05)
+            edge = max(1, im_h * a.EDGE, im_w * a.EDGE)
             x, y, w, h = tuple(mask["bbox"])
             x2 = x + w
             y2 = y + h
