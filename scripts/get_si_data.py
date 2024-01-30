@@ -4,11 +4,8 @@
 
 import argparse
 import os
-import struct
-import time
 
 import pandas as pd
-import piexif
 
 from utilities import *
 
@@ -26,7 +23,7 @@ def parse_args():
     parser.add_argument(
         "-query",
         dest="QUERY_STRING",
-        default='`Object Name` == "Sculpture"',
+        default='access == "CC0"',
         help="A Pandas query string to filter by. https://pandas.pydata.org/docs/user_guide/indexing.html#indexing-query",
     )
     parser.add_argument(
@@ -38,7 +35,7 @@ def parse_args():
     parser.add_argument(
         "-out",
         dest="OUTPUT_FILE",
-        default="output/si-chndm.csv",
+        default="output/si-chndm-pd.csv",
         help="Output data file",
     )
     parser.add_argument(
@@ -135,7 +132,21 @@ def main(a):
         for row in data:
             data_row = parse_si_json(row)
             data_rows.append(data_row)
-        break
+
+    # Convert to a DataFrame
+    df = pd.DataFrame(data_rows)
+    total_items = df.shape[0]
+    print(f"{total_items:,} items found.")
+
+    # Filter data by query
+    if a.QUERY_STRING != "":
+        df = df.query(a.QUERY_STRING)
+        total_items = df.shape[0]
+        print(f"{total_items:,} items after filtering with query: {a.QUERY_STRING}")
+
+    # Write to file
+    df.to_csv(a.OUTPUT_FILE)
+    print(f"Wrote items to {a.OUTPUT_FILE}")
 
 
 main(parse_args())
