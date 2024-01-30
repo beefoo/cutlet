@@ -1,6 +1,7 @@
 """Utility functions to support all scripts"""
 
 import glob
+import json
 import os
 import pickle
 import struct
@@ -77,6 +78,47 @@ def get_filenames(file_string, verbose=False):
     return files
 
 
+def get_nested_value(root, nodes, default_value=""):
+    """Get a value from a nested dict"""
+    value = default_value
+    found = True
+    if not isinstance(nodes, list):
+        nodes = [nodes]
+
+    for node in nodes:
+        if isinstance(node, int):
+            if isinstance(root, list) and len(root) > node:
+                root = root[node]
+            else:
+                found = False
+                break
+        elif node in root:
+            root = root[node]
+        else:
+            found = False
+            break
+
+    if found:
+        value = root
+
+    return value
+
+
+def get_where(arr, return_key, condition, default_value=""):
+    """Return a value from a list based on a condition"""
+    value = default_value
+    condition_key, condition_value = condition
+    for item in arr:
+        if (
+            condition_key in item
+            and item[condition_key] == condition_value
+            and return_key in item
+        ):
+            value = item[return_key]
+            break
+    return value
+
+
 def json_request(url):
     """Make a JSON request"""
     data = {}
@@ -118,6 +160,24 @@ def read_image_meta(image_filename, meta):
         value = exif_dict["0th"][getattr(piexif.ImageIFD, field_from)].decode()
         values[field_to] = value
     return values
+
+
+def read_line_delimited_json(filename):
+    """Read a line-delimted json file"""
+    results = []
+    with open(filename, "rb") as f:
+        for line in f:
+            item = json.loads(line.decode())
+            results.append(item)
+    return results
+
+
+def read_lines(filename):
+    """Read lines from file"""
+    lines = []
+    with open(filename, "rb") as f:
+        lines = [line.decode().rstrip() for line in f]
+    return lines
 
 
 def remove_files(listOrString):
