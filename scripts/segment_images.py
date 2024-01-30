@@ -51,6 +51,12 @@ def parse_args():
         help="Percentage of width/height; disregard if object is on the edge",
     )
     parser.add_argument(
+        "-bb",
+        dest="USE_BB",
+        action="store_true",
+        help="Use bounding box based on estimation of largest segment; otherwise, automatic segmentation is used",
+    )
+    parser.add_argument(
         "-clean",
         dest="CLEAN",
         action="store_true",

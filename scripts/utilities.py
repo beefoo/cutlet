@@ -5,8 +5,9 @@ import json
 import os
 import pickle
 import struct
-import time
 
+import cv2
+import numpy as np
 from PIL import Image
 import piexif
 import requests
@@ -76,6 +77,67 @@ def get_filenames(file_string, verbose=False):
     if verbose:
         print(f"Found {file_count} files")
     return files
+
+
+def get_largest_segment_bb(cv_image, debug=False):
+    """Function to return the bounding box of the largest segment in the image"""
+
+    # Read image, convert to grayscale, do threshold
+    gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+    th, im_th = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    # Copy the thresholded image.
+    im_floodfill = im_th.copy()
+
+    # Mask used to flood filling.
+    # Notice the size needs to be 2 pixels than the image.
+    h, w = im_th.shape[:2]
+    mask = np.zeros((h + 2, w + 2), np.uint8)
+
+    # Floodfill from point (0, 0)
+    cv2.floodFill(im_floodfill, mask, (0, 0), 255)
+
+    # Invert floodfilled image
+    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+
+    # Combine the two images to get the foreground.
+    im_out = im_th | im_floodfill_inv
+
+    # Display images.
+    if debug:
+        # cv2.imshow("Original Image", cv_image)
+        # cv2.imshow("Thresholded Image", im_th)
+        # cv2.imshow("Floodfilled Image", im_floodfill)
+        # cv2.imshow("Inverted Floodfilled Image", im_floodfill_inv)
+        cv2.imshow("Foreground", im_out)
+        cv2.waitKey(0)
+
+    # now try to get the largest segment
+    nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(
+        im_out, connectivity=4
+    )
+    sizes = stats[:, -1]
+    max_label = 1
+    max_size = sizes[1]
+    for i in range(1, nb_components):
+        if sizes[i] > max_size:
+            max_label = i
+            max_size = sizes[i]
+
+    # Display mask
+    if debug:
+        mask_with_largest_segment = np.zeros(output.shape)
+        mask_with_largest_segment[output == max_label] = 255
+        cv2.imshow("Biggest component", mask_with_largest_segment)
+        cv2.waitKey(0)
+
+    # get bounding box
+    width = stats[max_label, cv2.CC_STAT_WIDTH]
+    height = stats[max_label, cv2.CC_STAT_HEIGHT]
+    x = stats[max_label, cv2.CC_STAT_LEFT]
+    y = stats[max_label, cv2.CC_STAT_TOP]
+
+    return (x, y, width, height)
 
 
 def get_nested_value(root, nodes, default_value=""):
