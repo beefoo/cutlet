@@ -3,10 +3,10 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import cv2
 import os
+
+import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 from segment_anything import SamAutomaticMaskGenerator, sam_model_registry
 import torch
 
@@ -28,7 +28,11 @@ def parse_args():
         help="Path to checkpoint file",
     )
     parser.add_argument(
-        "-segments", dest="MAX_SEGMENTS", default=3, help="Max segments per image"
+        "-segments",
+        dest="MAX_SEGMENTS",
+        type=int,
+        default=3,
+        help="Max segments per image",
     )
     parser.add_argument(
         "-out",
@@ -51,10 +55,16 @@ def parse_args():
         help="Percentage of width/height; disregard if object is on the edge",
     )
     parser.add_argument(
-        "-bb",
-        dest="USE_BB",
+        "-remove-largest",
+        dest="REMOVE_LARGEST",
         action="store_true",
-        help="Use bounding box based on estimation of largest segment; otherwise, automatic segmentation is used",
+        help="Remove the segment with the largest bounding box; usually for images that have an empty background",
+    )
+    parser.add_argument(
+        "-composite",
+        dest="COMPOSITE",
+        action="store_true",
+        help="Output a single composite of the largest segment and all segments that are within that segment's bounding box",
     )
     parser.add_argument(
         "-clean",
@@ -114,7 +124,17 @@ def main(a):
         except RuntimeError as error:
             print(f"Error with file {fn}; skipping: {error}")
             continue
+        if len(masks) == 0:
+            continue
+        if a.REMOVE_LARGEST and len(masks) > 1:
+            # remove the mask with the largest bounding box (which should be the background)
+            masks = sorted(
+                masks, key=lambda x: x["bbox"][2] * x["bbox"][3], reverse=True
+            )
+            masks = masks[1:]
+        # sort by area
         masks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
+
         # remove masks that are on the edge
         non_edge_masks = []
         for mask in masks:
@@ -125,14 +145,34 @@ def main(a):
             if x > edge and y > edge and x2 < (im_w - edge) and y2 < (im_h - edge):
                 non_edge_masks.append(mask)
         masks = non_edge_masks
-        sample_size = a.MAX_SEGMENTS
-        if len(masks) > sample_size:
-            masks = masks[:sample_size]
         if len(masks) == 0:
             continue
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGRA)  # add transparency
+
+        # Add transparency
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGRA)
+
+        # If this is a composite
+        if a.COMPOSITE and len(masks) > 1:
+            largest_mask = masks[0]
+            remainder = masks[1:]
+
+            # Merge the largest segment with all segments that are within it's bounding box
+            for mask in remainder:
+                if bbox_contains(tuple(largest_mask["bbox"]), tuple(mask["bbox"])):
+                    largest_mask["segmentation"] = np.logical_or(
+                        largest_mask["segmentation"], mask["segmentation"]
+                    )
+
+            masks = [largest_mask]
+
+        else:
+            sample_size = a.MAX_SEGMENTS
+            if len(masks) > sample_size:
+                masks = masks[:sample_size]
+
         for j, mask in enumerate(masks):
-            segment_fn = f"{a.OUTPUT_DIR}/{get_basename(fn)}-{j+1}.png"
+            basename = f"{get_basename(fn)}-{j+1}" if j > 0 else get_basename(fn)
+            segment_fn = f"{a.OUTPUT_DIR}/{basename}.png"
             x, y, w, h = tuple(mask["bbox"])
             if x is None or y is None or w is None or h is None:
                 continue
