@@ -6,6 +6,8 @@ import os
 import pickle
 import struct
 
+import cv2
+import numpy as np
 from PIL import Image
 import piexif
 import requests
@@ -71,6 +73,41 @@ def empty_directory(dirname):
 def get_basename(fn):
     """Function to return the name of the filename without an extension"""
     return os.path.splitext(os.path.basename(fn))[0]
+
+
+def get_largest_mask_segment(mask_image, debug=False):
+    """Function to return the mask and bounding box of the largest segment in the image"""
+
+    # Try to get the largest segment
+    nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(
+        mask_image, connectivity=4
+    )
+    sizes = stats[:, -1]
+    max_label = 1
+    max_size = sizes[1]
+    for i in range(1, nb_components):
+        if sizes[i] > max_size:
+            max_label = i
+            max_size = sizes[i]
+    mask_with_largest_segment = np.zeros(output.shape)
+    mask_with_largest_segment[output == max_label] = 255
+
+    # Display mask
+    if debug:
+        scale = 0.333
+        cv2.imshow(
+            "Biggest component",
+            cv2.resize(mask_with_largest_segment, (0, 0), fx=scale, fy=scale),
+        )
+        cv2.waitKey(0)
+
+    # get bounding box
+    width = stats[max_label, cv2.CC_STAT_WIDTH]
+    height = stats[max_label, cv2.CC_STAT_HEIGHT]
+    x = stats[max_label, cv2.CC_STAT_LEFT]
+    y = stats[max_label, cv2.CC_STAT_TOP]
+
+    return {"mask": mask_with_largest_segment, "bbox": (x, y, width, height)}
 
 
 def get_filenames(file_string, verbose=False):

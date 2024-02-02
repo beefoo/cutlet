@@ -105,14 +105,17 @@ def main(a):
     mask_generator = SamAutomaticMaskGenerator(sam, min_mask_region_area=(32 * 32))
 
     for i, fn in enumerate(filenames):
-        existsFn = f"{a.OUTPUT_DIR}/{get_basename(fn)}-1.png"
+        existsFn = f"{a.OUTPUT_DIR}/{get_basename(fn)}.png"
         if os.path.isfile(existsFn):
             print(f"Already processed {i+1} of {file_count}: {fn}")
             continue
         print(f"Processing {i+1} of {file_count}: {fn}")
+
         image = cv2.imread(fn)
         im_h, im_w, im_c = image.shape
         im_d = max(im_h, im_w)
+
+        # Resize if necessary
         if im_d > a.MAX_IMAGE_DIMENSION:
             scale = 1.0 * a.MAX_IMAGE_DIMENSION / im_d
             im_h = round_int(im_h * scale)
