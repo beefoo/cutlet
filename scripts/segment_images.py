@@ -44,7 +44,7 @@ def parse_args():
         "-maxd",
         dest="MAX_IMAGE_DIMENSION",
         type=int,
-        default=4096,
+        default=4000,
         help="Max dimension of a source image; image will be resized before processing",
     )
     parser.add_argument(
@@ -55,7 +55,7 @@ def parse_args():
         help="Percentage of width/height; disregard if object is on the edge",
     )
     parser.add_argument(
-        "-remove-largest",
+        "-rml",
         dest="REMOVE_LARGEST",
         action="store_true",
         help="Remove the segment with the largest bounding box; usually for images that have an empty background",
@@ -63,8 +63,8 @@ def parse_args():
     parser.add_argument(
         "-composite",
         dest="COMPOSITE",
-        action="store_true",
-        help="Output a single composite of the largest segment and all segments that are within that segment's bounding box",
+        default="",
+        help="Output a single composite of the largest segment; values: bbox (all segments that are within that segment's bounding box), all (all remaining segments)",
     )
     parser.add_argument(
         "-clean",
@@ -155,13 +155,15 @@ def main(a):
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGRA)
 
         # If this is a composite
-        if a.COMPOSITE and len(masks) > 1:
+        if a.COMPOSITE != "" and len(masks) > 1:
             largest_mask = masks[0]
             remainder = masks[1:]
 
             # Merge the largest segment with all segments that are within it's bounding box
             for mask in remainder:
-                if bbox_contains(tuple(largest_mask["bbox"]), tuple(mask["bbox"])):
+                if a.COMPOSITE == "all" or bbox_contains(
+                    tuple(largest_mask["bbox"]), tuple(mask["bbox"])
+                ):
                     largest_mask["segmentation"] = np.logical_or(
                         largest_mask["segmentation"], mask["segmentation"]
                     )

@@ -18,7 +18,7 @@ python scripts/get_met_images.py -query "`Object Name` == \"Textile\"" -out "out
 Segment images
 
 ```
-python scripts/segment_images.py -in "output/met-sculptures/*.jpg" -out "output/met-sculptures-segments/" -edge 0.0001
+python scripts/segment_images.py -in "output/select-met-figures/*.jpg" -out "output/figures-segments/" -edge 0 -composite bbox -rml -clean
 ```
 
 ## LoC collections
