@@ -95,7 +95,7 @@ def main(a):
     errors = 0
     for i, item in pd_items.iterrows():
         object_id = str(item["Object ID"])
-        image_filename = f"{a.OUTPUT_DIR}{object_id}.jpg"
+        image_filename = f"{a.OUTPUT_DIR}met-{object_id}.jpg"
 
         if os.path.isfile(image_filename):
             continue

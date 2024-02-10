@@ -4,6 +4,7 @@ import glob
 import json
 import os
 import pickle
+import re
 import struct
 
 import cv2
@@ -75,6 +76,22 @@ def get_basename(fn):
     return os.path.splitext(os.path.basename(fn))[0]
 
 
+def get_filenames(file_string, verbose=False):
+    """Function for retrieve a list of files given a string."""
+    files = []
+    if "**" in file_string:
+        files = glob.glob(file_string, recursive=True)
+    if "*" in file_string:
+        files = glob.glob(file_string)
+    else:
+        files = [file_string]
+    file_count = len(files)
+    files = sorted(files)
+    if verbose:
+        print(f"Found {file_count} files")
+    return files
+
+
 def get_largest_mask_segment(mask_image, debug=False):
     """Function to return the mask and bounding box of the largest segment in the image"""
 
@@ -108,22 +125,6 @@ def get_largest_mask_segment(mask_image, debug=False):
     y = stats[max_label, cv2.CC_STAT_TOP]
 
     return {"mask": mask_with_largest_segment, "bbox": (x, y, width, height)}
-
-
-def get_filenames(file_string, verbose=False):
-    """Function for retrieve a list of files given a string."""
-    files = []
-    if "**" in file_string:
-        files = glob.glob(file_string, recursive=True)
-    if "*" in file_string:
-        files = glob.glob(file_string)
-    else:
-        files = [file_string]
-    file_count = len(files)
-    files = sorted(files)
-    if verbose:
-        print(f"Found {file_count} files")
-    return files
 
 
 def get_nested_value(root, nodes, default_value=""):
@@ -254,6 +255,14 @@ def save_cache_file(filename, data):
 def string_to_ascii(string):
     """Convert a string to ascii"""
     return string.encode("ascii", "ignore")
+
+
+def string_to_filename(string):
+    """Converts an arbitrary string into a valid filename"""
+
+    s = re.sub("[^0-9a-z]+", "_", str(string).lower())
+    filename = re.sub(r"\_+", "_", s)
+    return filename
 
 
 def write_meta_to_image(image_filename, meta):

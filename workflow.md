@@ -1,6 +1,14 @@
 ## Met collections
 
-Retrieve images
+### Get stats
+
+Create .csv containing counts for different columns from the [MetObjects data](https://github.com/metmuseum/openaccess/raw/master/MetObjects.csv)
+
+```
+python scripts/get_stats.py -src "cache/met-open-access-objects/MetObjects.csv" -query "`Is Public Domain`" -cols "Object Name,Medium" -out "output/met_{id}.csv"
+```
+
+### Retrieve images
 
 ```
 python scripts/get_met_images.py -query "`Object Name` == \"Sculpture\"" -out "output/met-sculptures/"
@@ -15,10 +23,16 @@ python scripts/get_met_images.py -query "`Object Name` == \"Ornament\"" -out "ou
 python scripts/get_met_images.py -query "`Object Name` == \"Textile\"" -out "output/met-textiles/"
 ```
 
-Segment images
+### Segment images
+
+Some are run twice with a second pass with reduced image size to account for images that get a runtime error `nonzero is not supported for tensors with more than INT_MAX elements`
 
 ```
-python scripts/segment_images.py -in "output/select-met-figures/*.jpg" -out "output/figures-segments/" -edge 0 -composite bbox -rml -clean
+python scripts/segment_images.py -in "output/select-met-figures/*.jpg" -out "output/figures-segments/" -edge 0 -composite bbox -rml
+python scripts/segment_images.py -in "output/select-met-heads/*.jpg" -out "output/heads-segments/" -edge 0 -composite bbox -rml
+python scripts/segment_images.py -in "output/select-met-heads/*.jpg" -out "output/heads-segments/" -edge 0 -composite bbox -rml -maxd 3000
+python scripts/segment_images.py -in "output/select-met-animals/*.jpg" -out "output/animals-segments/" -edge 0 -composite bbox -rml
+python scripts/segment_images.py -in "output/select-met-animals/*.jpg" -out "output/animals-segments/" -edge 0 -composite bbox -rml -maxd 3000
 ```
 
 ## LoC collections
