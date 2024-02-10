@@ -73,6 +73,8 @@ def parse_si_json(json_data):
     row["date"] = get_nested_value(structured, ["date", 0])
     row["name"] = get_nested_value(structured, ["name", 0])
     row["object_type"] = get_nested_value(structured, ["object_type", 0])
+    row["object_type_2"] = get_nested_value(structured, ["object_type", 1])
+    row["object_type_3"] = get_nested_value(structured, ["object_type", 2])
     row["place"] = get_nested_value(structured, ["place", 0])
 
     sets = get_nested_value(freetext, "setName", [])

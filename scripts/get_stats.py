@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument(
         "-query",
         dest="QUERY_STRING",
-        default="`Is Public Domain`",
+        default="",
         help="A Pandas query string to filter by. https://pandas.pydata.org/docs/user_guide/indexing.html#indexing-query",
     )
     parser.add_argument(

@@ -5,7 +5,7 @@
 Create .csv containing counts for different columns from the [MetObjects data](https://github.com/metmuseum/openaccess/raw/master/MetObjects.csv)
 
 ```
-python scripts/get_stats.py -src "cache/met-open-access-objects/MetObjects.csv" -query "`Is Public Domain`" -cols "Object Name,Medium" -out "output/met_{id}.csv"
+python scripts/get_stats.py -src "cache/met-open-access-objects/MetObjects.csv" -query "`Is Public Domain`" -cols "Object Name,Medium" -out "output/stats_met_{id}.csv"
 ```
 
 ### Retrieve images
@@ -66,4 +66,13 @@ python scripts/get_si_data.py -src "https://smithsonian-open-access.s3-us-west-2
 python scripts/get_si_data.py -src "https://smithsonian-open-access.s3-us-west-2.amazonaws.com/metadata/edan/nmaahc/index.txt" -cache "cache/si-nmaahc/" -out "output/si-nmaahc-pd.csv"
 python scripts/get_si_data.py -src "https://smithsonian-open-access.s3-us-west-2.amazonaws.com/metadata/edan/nasm/index.txt" -cache "cache/si-nasm/" -out "output/si-nasm-pd.csv"
 python scripts/get_si_data.py -src "https://smithsonian-open-access.s3-us-west-2.amazonaws.com/metadata/edan/nmnhminsci/index.txt" -cache "cache/si-nmnhminsci/" -out "output/si-nmnhminsci-pd.csv"
+```
+
+Generate counts for each dataset:
+
+```
+python scripts/get_stats.py -src "output/si-chndm-pd.csv" -cols "group,object_type,object_type_2,object_type_3" -out "output/stats_si_chndm_{id}.csv"
+python scripts/get_stats.py -src "output/si-nmaahc-pd.csv" -cols "group,object_type,object_type_2,object_type_3" -out "output/stats_si_nmaahc_{id}.csv"
+python scripts/get_stats.py -src "output/si-nasm-pd.csv" -cols "group,object_type,object_type_2,object_type_3" -out "output/stats_si_nasm_{id}.csv"
+python scripts/get_stats.py -src "output/si-nmnhminsci-pd.csv" -cols "group,object_type,object_type_2,object_type_3" -out "output/stats_si_nmnhminsci_{id}.csv"
 ```
