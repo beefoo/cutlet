@@ -32,7 +32,7 @@ def parse_args():
     parser.add_argument(
         "-query",
         dest="QUERY_STRING",
-        default='object_type == "Cutlery" or object_type_2 == "Cutlery" or object_type_3 == "Cutlery"',
+        default="",
         help="A Pandas query string to filter by. https://pandas.pydata.org/docs/user_guide/indexing.html#indexing-query",
     )
     parser.add_argument(
@@ -91,8 +91,16 @@ def main(a):
         # Download and save the image
         image_url = item[a.IMAGE_COLUMN]
 
+        # Get the file extensions of the source and destination
         src_fn, src_ext = os.path.splitext(image_url)
         dest_fn, dest_ext = os.path.splitext(image_filename)
+
+        # Check for hash
+        if "#" in src_ext:
+            src_ext, _ = tuple(src_ext.split("#", 1))
+
+        # print(src_ext, dest_ext)
+        # break
 
         # Source and destination file extension is the same, just download
         if src_ext.lower() == dest_ext.lower():
