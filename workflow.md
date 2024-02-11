@@ -51,7 +51,7 @@ python scripts/segment_images.py -in "output/select-met-animals/*.jpg" -out "out
 - [Paintings at the National Portrait Gallery](https://www.si.edu/search/collection-images?edan_q=&edan_fq%5B0%5D=unit_code%3ANPG%20OR%20unit_code%3ANPG_BL%20OR%20unit_code%3ANPG_PC%20OR%20unit_code%3ANPG_YT&edan_fq%5B1%5D=object_type%3A%22Paintings%22&edan_fq%5B2%5D=media_usage%3A%22CC0%22)
 - [Activism at NMAAHC](https://www.si.edu/search/collection-images?edan_q=&edan_fq%5B0%5D=unit_code%3ANMAAHC%20OR%20unit_code%3ANMAAHC_YT&edan_fq%5B1%5D=topic%3A%22Activism%22&edan_fq%5B2%5D=media_usage%3A%22CC0%22)
 - [Aircraft at the Air and Space Museum](https://www.si.edu/search/collection-images?edan_q=&edan_fq%5B0%5D=unit_code%3ANASM%20OR%20unit_code%3ANASMAC%20OR%20unit_code%3ANASM_BL%20OR%20unit_code%3ANASM_YT&edan_fq%5B1%5D=object_type%3A%22Aircraft%22&edan_fq%5B2%5D=media_usage%3A%22CC0%22)
-- [Mineral Sciences at the Natural History Museum](https://www.si.edu/search/collection-images?edan_q=&edan_fq%5B0%5D=unit_code%3ANAA%20OR%20unit_code%3ANMNH%20OR%20unit_code%3ANMNHANTHRO%20OR%20unit_code%3ANMNHBIRDS%20OR%20unit_code%3ANMNHBOTANY%20OR%20unit_code%3ANMNHENTO%20OR%20unit_code%3ANMNHFISHES%20OR%20unit_code%3ANMNHHERPS%20OR%20unit_code%3ANMNHINV%20OR%20unit_code%3ANMNHMAMMALS%20OR%20unit_code%3ANMNHMINSCI%20OR%20unit_code%3ANMNHPALEO%20OR%20unit_code%3ANMNH_BL%20OR%20unit_code%3ANMNH_PC%20OR%20unit_code%3ANMNH_YT%20OR%20unit_code%3ACEPH%20OR%20unit_code%3AHSFA%20OR%20unit_code%3AHSFA_YT%20OR%20unit_code%3AMMAM%20OR%20unit_code%3ANMNHEDUCATION&edan_fq%5B1%5D=topic%3A%22Mineralogy%22&edan_fq%5B2%5D=set_name%3A%22Mineral%20Sciences%22&edan_fq%5B3%5D=media_usage%3A%22CC0%22)
+- [Gems at the Natural History Museum](https://www.si.edu/search/collection-images?edan_q=&edan_fq[]=unit_code:NAA+OR+unit_code%3ANMNH+OR+unit_code%3ANMNHANTHRO+OR+unit_code%3ANMNHBIRDS+OR+unit_code%3ANMNHBOTANY+OR+unit_code%3ANMNHENTO+OR+unit_code%3ANMNHFISHES+OR+unit_code%3ANMNHHERPS+OR+unit_code%3ANMNHINV+OR+unit_code%3ANMNHMAMMALS+OR+unit_code%3ANMNHMINSCI+OR+unit_code%3ANMNHPALEO+OR+unit_code%3ANMNH_BL+OR+unit_code%3ANMNH_PC+OR+unit_code%3ANMNH_YT+OR+unit_code%3ACEPH+OR+unit_code%3AHSFA+OR+unit_code%3AHSFA_YT+OR+unit_code%3AMMAM+OR+unit_code%3ANMNHEDUCATION&edan_fq[]=set_name:%22Gems%22&edan_fq[]=media_usage:%22CC0%22)
 
 To get a list of department datasets:
 
@@ -74,5 +74,15 @@ Generate counts for each dataset:
 python scripts/get_stats.py -src "output/si-chndm-pd.csv" -cols "group,object_type,object_type_2,object_type_3" -out "output/stats_si_chndm_{id}.csv"
 python scripts/get_stats.py -src "output/si-nmaahc-pd.csv" -cols "group,object_type,object_type_2,object_type_3" -out "output/stats_si_nmaahc_{id}.csv"
 python scripts/get_stats.py -src "output/si-nasm-pd.csv" -cols "group,object_type,object_type_2,object_type_3" -out "output/stats_si_nasm_{id}.csv"
-python scripts/get_stats.py -src "output/si-nmnhminsci-pd.csv" -cols "group,object_type,object_type_2,object_type_3" -out "output/stats_si_nmnhminsci_{id}.csv"
+python scripts/get_stats.py -src "output/si-nmnhminsci-pd.csv" -cols "group,topic" -out "output/stats_si_nmnhminsci_{id}.csv"
+```
+
+Download images for each dataset:
+
+```
+python scripts/get_images.py -src "output/si-chndm-pd.csv" -image "image" -query "object_type == \"Cutlery\" or object_type_2 == \"Cutlery\" or object_type_3 == \"Cutlery\"" -out "output/si-cutlery/si-{id}.jpg"
+python scripts/get_images.py -src "output/si-chndm-pd.csv" -image "image" -query "object_type == \"Button\" or object_type_2 == \"Button\" or object_type_3 == \"Button\"" -out "output/si-buttons/si-{id}.jpg"
+python scripts/get_images.py -src "output/si-chndm-pd.csv" -image "image" -query "object_type == \"Furniture\" or object_type_2 == \"Furniture\" or object_type_3 == \"Furniture\"" -out "output/si-furniture/si-{id}.jpg"
+python scripts/get_images.py -src "output/si-nasm-pd.csv" -image "image" -query "object_type == \"Aircraft\" or object_type_2 == \"Aircraft\" or object_type_3 == \"Aircraft\"" -out "output/si-aircraft/si-{id}.jpg"
+python scripts/get_images.py -src "output/si-nmnhminsci-pd.csv" -image "image" -query "group == \"Gems\"" -out "output/si-gems/si-{id}.jpg"
 ```
