@@ -105,8 +105,8 @@ def main(a):
     mask_generator = SamAutomaticMaskGenerator(sam, min_mask_region_area=(32 * 32))
 
     for i, fn in enumerate(filenames):
-        existsFn = f"{a.OUTPUT_DIR}/{get_basename(fn)}.png"
-        if os.path.isfile(existsFn):
+        exists_fn = f"{a.OUTPUT_DIR}/{get_basename(fn)}.png"
+        if os.path.isfile(exists_fn):
             print(f"Already processed {i+1} of {file_count}: {fn}")
             continue
         print(f"Processing {i+1} of {file_count}: {fn}")
