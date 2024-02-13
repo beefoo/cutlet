@@ -36,6 +36,13 @@ def parse_args():
         help="Max dimension of a source image; image will be resized before processing",
     )
     parser.add_argument(
+        "-mintd",
+        dest="MIN_TEXT_DIMENSION",
+        type=int,
+        default=100,
+        help="Only segment text that has a dimension of this value or higher",
+    )
+    parser.add_argument(
         "-out",
         dest="OUTPUT_DIR",
         default="output/sample-text-segments/",
@@ -140,6 +147,13 @@ def main(a):
 
             # only process alpha numeric symbols
             if not symbol.isalnum():
+                continue
+
+            # only process text that is large enough
+            tw = x2 - x1
+            th = y2 - y1
+            max_text_dimension = max(tw, th)
+            if max_text_dimension < a.MIN_TEXT_DIMENSION:
                 continue
 
             # Do the prediction with the symbol's bounding box

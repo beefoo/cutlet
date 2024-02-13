@@ -1,4 +1,4 @@
-"""Script for retrieving dates from transcripts"""
+"""Script for retrieving images from the Met API"""
 
 # -*- coding: utf-8 -*-
 
