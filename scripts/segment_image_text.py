@@ -39,7 +39,7 @@ def parse_args():
         "-mintd",
         dest="MIN_TEXT_DIMENSION",
         type=int,
-        default=100,
+        default=200,
         help="Only segment text that has a dimension of this value or higher",
     )
     parser.add_argument(
@@ -194,7 +194,10 @@ def main(a):
                 f"{a.OUTPUT_DIR}{symbol.lower()}/{get_basename(fn)}-{count}.png"
             )
             make_directories(segment_fn)
-            cv2.imwrite(segment_fn, cropped_image)
+            try:
+                cv2.imwrite(segment_fn, cropped_image)
+            except cv2.error as e:
+                print(f"Error writing image to file: {e}")
 
 
 main(parse_args())
