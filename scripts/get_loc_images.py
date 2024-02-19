@@ -6,7 +6,9 @@ import argparse
 import os
 import time
 
+import numpy as np
 import pandas as pd
+import PIL
 
 from utilities import *
 
@@ -56,12 +58,15 @@ def parse_args():
 
 
 def main(a):
-    """Main function retrieve open access Met images"""
+    """Main function retrieve open access Library of Congress images"""
 
     make_directories([a.CACHE_DIRECTORY, a.OUTPUT_DIR])
 
     if a.CLEAN:
         empty_directory(a.CACHE_DIRECTORY)
+
+    # Trust all large images
+    PIL.Image.MAX_IMAGE_PIXELS = None
 
     # Read the data
     items = pd.read_csv(a.DATA_SOURCE)
@@ -93,7 +98,7 @@ def main(a):
         item_data = item_cache[id] if id in item_cache else None
         if item_data is None:
             # Request data from API
-            api_url = f"{url}?fo=json"
+            api_url = f"{url}&fo=json" if "?" in url else f"{url}?fo=json"
             response = json_request(api_url)
             if "error" in response:
                 print(f"{response['error']} error when requesting {api_url}. Skipping.")
@@ -101,27 +106,53 @@ def main(a):
                 time.sleep(1)
                 continue
 
+            resources = []
+
+            # This is a page within a multi-page document
+            if "page" in response:
+                resources = response["page"]
+
             # Retrieve resource list from API response
-            resources = get_nested_value(response, ["resources", 0, "files", 0], [])
+            else:
+                resources = get_nested_value(response, ["resources", 0, "files", 0], [])
+
             if not isinstance(resources, list) or len(resources) == 0:
                 print(f"No resources found for {api_url}")
                 continue
 
+            all_resources = resources[:]
+
             # Filter out non-images
             resources = [
                 r
-                for r in resources
+                for r in all_resources
                 if "mimetype" in r
-                and r["mimetype"] in ["image/jpeg", "image/tiff"]
+                and r["mimetype"] in ["image/jpg", "image/jpeg", "image/tiff"]
                 and "size" in r
                 and "url" in r
             ]
+
+            # Sort by size
+            resources = sorted(resources, key=lambda r: -r["size"])
+
+            # use height if size is not available
+            if len(resources) == 0:
+                resources = [
+                    r
+                    for r in all_resources
+                    if "mimetype" in r
+                    and r["mimetype"] in ["image/jpg", "image/jpeg", "image/tiff"]
+                    and "height" in r
+                    and "url" in r
+                ]
+
+                # Sort by size
+                resources = sorted(resources, key=lambda r: -r["height"])
+
             if len(resources) == 0:
                 print(f"No image resources for {api_url}")
                 continue
 
-            # Sort by size
-            resources = sorted(resources, key=lambda r: -r["size"])
             largest_resource = resources[0]
             item_data = {"resource_url": largest_resource["url"]}
 
@@ -149,11 +180,20 @@ def main(a):
             else:
                 image = download_and_read_image(image_url)
                 try:
+                    # Check for 16-bit images; convert to 8-bit
+                    if image.format == "TIFF" and image.mode == "I;16":
+                        array = np.array(image)
+                        normalized = (
+                            (array.astype(np.uint16) - array.min())
+                            * 255.0
+                            / (array.max() - array.min())
+                        )
+                        image = Image.fromarray(normalized.astype(np.uint8))
                     image.save(image_filename)
-                except OSError:
-                    print(f"Invalid image: OSError with {image_url}")
-                except KeyError:
-                    print(f"Invalid image: KeyError with {image_url}")
+                except OSError as e:
+                    print(f"OSError: {e} with {image_url} in {url}")
+                except KeyError as e:
+                    print(f"KeyError: {e} with {image_url} in {url}")
 
             if not os.path.isfile(image_filename):
                 errors += 1

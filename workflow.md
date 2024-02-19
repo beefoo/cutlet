@@ -46,10 +46,24 @@ python scripts/segment_images.py -in "output/select-met-animals/*.jpg" -out "out
 - [Martha Graham at the Library of Congress (original-format:photo, print, drawing, online-format:image)](https://www.loc.gov/collections/martha-graham/?fa=original-format:photo,+print,+drawing%7Conline-format:image)
 - [Larry Colwell Dance Photographs, 1944-1966 (original-format:photo, print, drawing)](https://www.loc.gov/collections/larry-colwell-dance-photographs-1944-to-1966/?fa=original-format:photo,+print,+drawing)
 
-### Download images
+### Download and segment images
 
 ```
 python scripts/get_images.py -src "data/loc/musical-instruments-at-the-library-of-congress-original-format-3d-object-2024-01-28.csv" -image "image_url" -out "output/loc-instruments/loc-{id}.jpg"
+python scripts/segment_images.py -in "output/select-loc-instruments/*.jpg" -out "output/flute-segments/" -edge 0 -composite bbox -rml
+```
+
+### Download high-res images and segment text
+
+```
+python scripts/get_loc_images.py -src "data/loc/posters-wpa-posters-2024-02-11.csv" -out "output/loc-posters/"
+python scripts/segment_image_text.py -in "output/loc-posters/*.jpg" -out "output/poster-text-segments/"
+```
+
+### Download high-res images
+
+```
+python scripts/get_loc_images.py -src "data/loc/loc-item-selections-2024-02-18-194519.csv" -out "output/loc-selections/"
 ```
 
 ## SI Collections
@@ -107,7 +121,7 @@ Some are run twice with a second pass with reduced image size to account for ima
 ```
 python scripts/segment_images.py -in "output/si-cutlery/*.jpg" -out "output/cutlery-segments/" -edge 0 -composite bbox -rml
 python scripts/segment_images.py -in "output/si-buttons/*.jpg" -out "output/buttons-segments/" -edge 0 -composite bbox -rml
-python scripts/segment_images.py -in "output/si-furniture/*.jpg" -out "output/furniture-segments/" -edge 0 -composite bbox -rml
+python scripts/segment_images.py -in "output/select-si-furniture/*.jpg" -out "output/furniture-segments/" -edge 0 -composite bbox -rml
 python scripts/segment_images.py -in "output/si-aircraft/*.jpg" -out "output/aircraft-segments/" -edge 0 -composite bbox -rml
 python scripts/segment_images.py -in "output/si-gems/*.jpg" -out "output/gems-segments/" -edge 0 -composite bbox -rml
 ```
